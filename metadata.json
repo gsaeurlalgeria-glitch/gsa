@@ -1,0 +1,6 @@
+{
+  "name": "Global Solutions Algeria",
+  "description": "Portail officiel de EURL GSA. Assistance technique, administrative, portage salarial, logistique d'accueil et assistance commerciale en Algérie pour l'industrie et l'énergie.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
