@@ -220,7 +220,7 @@ export const translations: { FR: TranslationSet; EN: TranslationSet } = {
           id: "oil-gas",
           title: "OIL & GAS",
           description: "Accompagnement de projets en exploration, production et transport.",
-          profiles: ["Ingénieurs process", "Techniciens de maintenance", "Coordinateurs HSE", "Inspecteurs qualité"]
+          profiles: ["Chef projet EPC", "Construction Manager", "Topographe", "Commissioning Manager", "Ingénieurs process", "Techniciens de maintenance", "Coordinateurs HSE", "Inspecteurs qualité"]
         },
         {
           id: "energy",
@@ -463,7 +463,7 @@ export const translations: { FR: TranslationSet; EN: TranslationSet } = {
           id: "oil-gas",
           title: "OIL & GAS",
           description: "Full technical lifecycle support in pipeline exploration, production, and transit.",
-          profiles: ["Process Engineers", "Maintenance Technicians", "HSE Site Coordinators", "QA/QC inspectors"]
+          profiles: ["EPC Project Manager", "Construction Manager", "Topographer", "Commissioning Manager", "Process Engineers", "Maintenance Technicians", "HSE Site Coordinators", "QA/QC inspectors"]
         },
         {
           id: "energy",
