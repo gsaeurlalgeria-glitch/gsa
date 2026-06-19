@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
 
+Sitemap: https://gsaalgeria.dz/sitemap.xml
 Sitemap: https://www.gsaalgeria.dz/sitemap.xml
