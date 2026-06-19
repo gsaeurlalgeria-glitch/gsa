@@ -28,11 +28,12 @@ import {
   MessageSquare,
   Sparkles,
   Info,
-  ArrowUp
+  ArrowUp,
+  ExternalLink
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { translations, TranslationSet, SectorItem, ServiceItem } from "./data";
-import logoUrl from "./assets/images/gsa_logo_1780598098903.png";
+import logoUrl from "./assets/images/gsa_logo_drive.png";
 
 export default function App() {
   const [lang, setLang] = useState<"FR" | "EN">("FR");
@@ -55,6 +56,7 @@ export default function App() {
   const [submitSuccess, setSubmitSuccess] = useState<boolean>(false);
   const [submissionId, setSubmissionId] = useState<string>("");
   const [submitStep, setSubmitStep] = useState<string>("");
+  const [copiedTicket, setCopiedTicket] = useState<boolean>(false);
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -118,33 +120,68 @@ export default function App() {
     }
   };
 
-  // Form Submission Simulator with visual security steps
-  const handleSubmitContact = (e: React.FormEvent) => {
+  // Form Submission and real-time backend API integration
+  const handleSubmitContact = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fullName || !email || !message) return;
 
     setIsSubmitting(true);
-    setSubmitStep(lang === "FR" ? "Établissement de la liaison sécurisée SSL..." : "Establishing SSL Secure Channel...");
-    
-    setTimeout(() => {
-      setSubmitStep(lang === "FR" ? "Contrôle de conformité RGPD & Décret Algérien..." : "GDPR & Algerian Regulatory Compliance Auditing...");
-      
-      setTimeout(() => {
-        setSubmitStep(lang === "FR" ? "Enregistrement du besoin dans le serveur central Eurl GSA..." : "Logging expression of need in GSA core registry...");
+    const generatedId = "GSA-2026-" + Math.floor(100000 + Math.random() * 900000);
+    setSubmissionId(generatedId);
+
+    // Initial visual queue
+    setSubmitStep(lang === "FR" ? "Établissement du canal sécurisé SSL..." : "Structuring secure TLS session...");
+
+    try {
+      // Begin actual dispatch request parallel to step animations for quick UI response
+      const apiPromise = fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fullName,
+          email,
+          phone,
+          company,
+          industry,
+          message,
+          submissionId: generatedId
+        })
+      });
+
+      // Show professional compliance checks during transmission
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      setSubmitStep(lang === "FR" ? "Contrôle de conformité et audit anti-spam..." : "Auditing parameters for compliance...");
+
+      await new Promise((resolve) => setTimeout(resolve, 750));
+      setSubmitStep(lang === "FR" ? "Transmission SMTP sécurisée vers contact@gsaalgeria.dz..." : "Routing secure SMTP relay to contact@gsaalgeria.dz...");
+
+      const response = await apiPromise;
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        // Let user see the completion briefly
+        await new Promise((resolve) => setTimeout(resolve, 600));
+        setIsSubmitting(false);
+        setSubmitSuccess(true);
         
-        setTimeout(() => {
-          setIsSubmitting(false);
-          setSubmitSuccess(true);
-          const generatedId = "GSA-2026-" + Math.floor(100000 + Math.random() * 900000);
-          setSubmissionId(generatedId);
-          // Auto scroll to success message
-          const element = document.getElementById("contact");
-          if (element) {
-            element.scrollIntoView({ behavior: "smooth" });
-          }
-        }, 1200);
-      }, 1000);
-    }, 1000);
+        // Auto-scroll on success
+        const element = document.getElementById("contact");
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth" });
+        }
+      } else {
+        throw new Error(result.error || (lang === "FR" ? "Échec de l'acheminement du message." : "Routing failed."));
+      }
+    } catch (err: any) {
+      console.error("[FORM_POST_ERROR]", err);
+      setIsSubmitting(false);
+      alert(lang === "FR" 
+        ? `Erreur lors de l'envoi : ${err.message || "Erreur de connexion"}. Veuillez réessayer.` 
+        : `Delivery failure: ${err.message || "Network issue"}. Please try again.`
+      );
+    }
   };
 
   const handleResetForm = () => {
@@ -156,6 +193,7 @@ export default function App() {
     setMessage("");
     setSubmitSuccess(false);
     setSubmissionId("");
+    setCopiedTicket(false);
   };
 
   return (
@@ -171,13 +209,13 @@ export default function App() {
             </span>
             <span className="hidden md:flex items-center gap-2 text-slate-400">
               <MapPin className="w-3.5 h-3.5 text-gsa-gold" />
-              Algeria • Algiers & Major Industrial Basins
+              Algeria • Béjaia & Industrial Hubs
             </span>
           </div>
           <div className="flex items-center gap-5">
-            <a href="mailto:Eurlgsa@gmail.com" className="hover:text-gsa-gold transition-colors flex items-center gap-1">
+            <a href="mailto:contact@gsaalgeria.dz" className="hover:text-gsa-gold transition-colors flex items-center gap-1">
               <Mail className="w-3.5 h-3.5 text-gsa-gold" />
-              Eurlgsa@gmail.com
+              contact@gsaalgeria.dz
             </a>
             <span className="text-slate-500">|</span>
             <div className="flex items-center gap-2">
@@ -1011,61 +1049,134 @@ export default function App() {
               <div className="space-y-6">
                 
                 {/* Email item */}
-                <div className="flex gap-4 items-start p-4 bg-slate-950/55 rounded-2xl border border-slate-800 hover:border-gsa-gold/40 transition-colors">
-                  <div className="p-3 bg-gsa-navy/80 text-gsa-gold rounded-xl">
-                    <Mail className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">EMAIL DE CONTACT</p>
-                    <a href="mailto:Eurlgsa@gmail.com" className="text-base font-bold text-white hover:text-gsa-gold transition-colors block mt-1">
-                      Eurlgsa@gmail.com
-                    </a>
+                <div className="p-6 bg-gradient-to-br from-slate-950 to-slate-900 rounded-2xl border border-slate-800/80 shadow-[0_15px_30px_rgba(0,0,0,0.4)] relative overflow-hidden group hover:border-gsa-gold/30 transition-all duration-300">
+                  <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-gsa-gold to-gsa-navy-light rounded-l-2xl"></div>
+                  
+                  <div className="flex gap-4 items-start">
+                    <div className="p-3 bg-gsa-navy text-gsa-gold rounded-xl shadow-lg border border-slate-800/80 shrink-0">
+                      <Mail className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <p className="text-[10px] font-extrabold text-gsa-gold tracking-widest uppercase">
+                          {lang === "FR" ? "EMAIL DE CONTACT" : "CONTACT EMAIL"}
+                        </p>
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase tracking-wider">
+                          {lang === "FR" ? "Réponse rapide" : "Quick response"}
+                        </span>
+                      </div>
+                      
+                      <div className="mt-4">
+                        <a href="mailto:contact@gsaalgeria.dz" className="text-sm sm:text-base font-bold font-mono text-white hover:text-gsa-gold transition-colors block leading-none">
+                          contact@gsaalgeria.dz
+                        </a>
+                        <p className="text-[11px] text-slate-400 mt-2 font-light leading-relaxed">
+                          {lang === "FR" 
+                            ? "Pour toute cotation, demande de service ou liaison réglementaire." 
+                            : "For service quotes, deployment requests or administrative inquiry."
+                          }
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
                 {/* Phone item */}
-                <div className="flex gap-4 items-start p-4 bg-slate-950/55 rounded-2xl border border-slate-800 hover:border-gsa-gold/40 transition-colors">
-                  <div className="p-3 bg-gsa-navy/80 text-gsa-gold rounded-xl">
-                    <Phone className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">LIGNES TÉLÉPHONIQUES DES OPÉRATIONS</p>
-                    <div className="space-y-1 mt-1 font-mono">
-                      <a href="tel:+213553014306" className="text-sm font-bold text-white hover:text-gsa-gold transition-colors block">+213 (0) 553 014 306</a>
-                      <a href="tel:+213698087278" className="text-sm font-bold text-white hover:text-gsa-gold transition-colors block">+213 (0) 698 087 278</a>
+                <div className="p-6 bg-gradient-to-br from-slate-950 to-slate-900 rounded-2xl border border-slate-800/80 shadow-[0_15px_30px_rgba(0,0,0,0.4)] relative overflow-hidden group hover:border-gsa-gold/30 transition-all duration-300">
+                  <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-gsa-gold to-gsa-navy-light rounded-l-2xl"></div>
+                  
+                  <div className="flex gap-4 items-start">
+                    <div className="p-3 bg-gsa-navy text-gsa-gold rounded-xl shadow-lg border border-slate-800/80 shrink-0">
+                      <Phone className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <p className="text-[10px] font-extrabold text-gsa-gold tracking-widest uppercase">
+                          {lang === "FR" ? "LIGNES OPÉRATIONNELLES" : "OPERATIONAL PHONES"}
+                        </p>
+                      </div>
+                      
+                      <div className="mt-4 space-y-3 font-mono">
+                        <a href="tel:+213553014306" className="block text-sm font-bold text-white hover:text-gsa-gold transition-colors tracking-wide pb-1.5 border-b border-slate-800/40">+213 (0) 553 014 306</a>
+                        <a href="tel:+213698087278" className="block text-sm font-bold text-white hover:text-gsa-gold transition-colors tracking-wide">+213 (0) 698 087 278</a>
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 {/* LinkedIn item */}
-                <div className="flex gap-4 items-start p-4 bg-slate-950/55 rounded-2xl border border-slate-800 hover:border-gsa-gold/40 transition-colors">
-                  <div className="p-3 bg-gsa-navy/80 text-gsa-gold rounded-xl">
-                    <Linkedin className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">RÉSEAU PROFESSIONNEL</p>
-                    <a 
-                      href="https://linkedin.com/company/eurl-gsa-global-solutions-algeria" 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="text-sm font-bold text-white hover:text-gsa-gold transition-colors block mt-1"
-                    >
-                      EURL GSA — Global Solutions Algeria
-                    </a>
+                <div className="p-6 bg-gradient-to-br from-slate-950 to-slate-900 rounded-2xl border border-slate-800/80 shadow-[0_15px_30px_rgba(0,0,0,0.4)] relative overflow-hidden group hover:border-gsa-gold/30 transition-all duration-300">
+                  <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-gsa-gold to-gsa-navy-light rounded-l-2xl"></div>
+                  
+                  <div className="flex gap-4 items-start">
+                    <div className="p-3 bg-gsa-navy text-gsa-gold rounded-xl shadow-lg border border-slate-800/80 shrink-0">
+                      <Linkedin className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <p className="text-[10px] font-extrabold text-gsa-gold tracking-widest uppercase">
+                          {lang === "FR" ? "RÉSEAU ECOSYSTÈME" : "PROFESSIONAL LINK"}
+                        </p>
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase tracking-wider">
+                          LinkedIn
+                        </span>
+                      </div>
+                      
+                      <div className="mt-4">
+                        <a 
+                          href="https://www.linkedin.com/company/gsa-algeria/" 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="text-sm font-bold text-white hover:text-gsa-gold transition-colors block mt-1 hover:underline"
+                        >
+                          EURL GSA — Global Solutions Algeria
+                        </a>
+                        <p className="text-[11px] text-slate-400 mt-2 font-light leading-relaxed">
+                          {lang === "FR" 
+                            ? "Suivez notre actualité réglementaire, nos avis d'experts et nos offres de portage salarial." 
+                            : "Stay informed about Algerian corporate laws, tax notices, and active deployments."
+                          }
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                {/* Corporate Address Hub */}
-                <div className="flex gap-4 items-start p-4 bg-slate-950/55 rounded-2xl border border-slate-800">
-                  <div className="p-3 bg-gsa-navy/80 text-gsa-gold rounded-xl">
-                    <MapPin className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">PORTAIL WEB & SIÈGE CORPORATE</p>
-                    <p className="text-xs text-slate-350 mt-1 leading-relaxed font-light">
-                      Algeria, Algiers — Liaison with Oilfield Hubs Hassi-Messaoud & Oran Base.
-                    </p>
-                    <span className="text-gsa-gold font-mono text-[10px] block mt-1 tracking-wider">WWW.GSA-ALGERIA.DZ</span>
+                {/* Corporate Address Hub & Administrative Seat */}
+                <div className="p-6 bg-gradient-to-br from-slate-950 to-slate-900 rounded-2xl border border-slate-800/80 shadow-[0_15px_30px_rgba(0,0,0,0.4)] relative overflow-hidden group hover:border-gsa-gold/30 transition-all duration-300">
+                  <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-gsa-gold to-gsa-navy-light rounded-l-2xl"></div>
+                  
+                  <div className="flex gap-4 items-start">
+                    <div className="p-3 bg-gsa-navy text-gsa-gold rounded-xl shadow-lg border border-slate-800/80 shrink-0">
+                      <MapPin className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <p className="text-[10px] font-extrabold text-gsa-gold tracking-widest uppercase">
+                          {lang === "FR" ? "PORTAIL WEB & SIÈGE CORPORATE" : "WEB PORTAL & CORPORATE ADDR."}
+                        </p>
+                      </div>
+                      
+                      {/* Styled Address display */}
+                      <div className="mt-4">
+                        <p className="text-sm font-bold text-white tracking-wide">
+                          {lang === "FR" ? "Béjaïa, Algérie" : "Bejaia, Algeria"}
+                        </p>
+                      </div>
+
+                      {/* Interactive External link for the primary server URL */}
+                      <div className="mt-5 pt-3.5 border-t border-slate-800/60 flex items-center justify-end">
+                        <a 
+                          href="https://www.gsaalgeria.dz" 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="inline-flex items-center gap-1.5 text-xs font-bold text-gsa-gold hover:text-white transition-colors uppercase tracking-wider font-mono bg-gsa-navy-dark/60 hover:bg-gsa-gold/10 px-3 py-1.5 rounded-lg border border-gsa-gold/20"
+                        >
+                          <span>gsaalgeria.dz</span>
+                          <ExternalLink className="w-3.5 h-3.5 text-current stroke-[2.5]" />
+                        </a>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -1238,27 +1349,47 @@ export default function App() {
                     <p className="flex justify-between"><span className="text-slate-400 font-light">REGISTRY TICKET:</span> <span className="font-bold text-slate-900">{submissionId}</span></p>
                     <p className="flex justify-between"><span className="text-slate-400 font-light">SENDER:</span> <span className="text-slate-900">{fullName}</span></p>
                     <p className="flex justify-between"><span className="text-slate-400 font-light">ORGANIZATION:</span> <span className="text-slate-900">{company || "Non spécifiée"}</span></p>
-                    <p className="flex justify-between"><span className="text-slate-400 font-light">DESTINATION:</span> <span className="text-slate-900">EURL GSA permanent secretariat</span></p>
+                    <p className="flex justify-between"><span className="text-slate-400 font-light">DESTINATION:</span> <span className="text-emerald-700 font-bold">contact@gsaalgeria.dz</span></p>
                     <p className="flex justify-between"><span className="text-slate-400 font-light">TIME FILING:</span> <span className="text-slate-900">{new Date().toISOString()}</span></p>
                   </div>
 
-                  <div className="pt-6 flex flex-col sm:flex-row gap-3 justify-center">
+                  <div className="pt-2 max-w-md mx-auto">
+                    <a
+                      href={`mailto:contact@gsaalgeria.dz?subject=${encodeURIComponent(`Contact EURL GSA: ${fullName} [${company || "Client"}]`)}&body=${encodeURIComponent(`Bonjour EURL GSA,\n\nVous avez reçu une demande de consultation via le site web.\n\nCOORDONNÉES CLIENT :\n• Nom complet : ${fullName}\n• E-mail : ${email}\n• Téléphone : ${phone || "Non spécifié"}\n• Entreprise : ${company || "Non spécifiée"}\n• Secteur : ${industry || "Non spécifié"}\n\nMESSAGE DU CLIENT :\n${message}\n\n-------------------\nRéf Ticket : ${submissionId}\nDate : ${new Date().toLocaleString()}\n`)}`}
+                      className="w-full bg-gsa-navy hover:bg-gsa-navy-light text-white py-3.5 px-5 rounded-xl text-xs font-bold transition-all shadow-md flex items-center justify-center gap-2 border border-gsa-gold/40 group active:scale-[0.98]"
+                    >
+                      <Mail className="w-4 h-4 text-gsa-gold animate-pulse" />
+                      <span>
+                        {lang === "FR" 
+                          ? "Ouvrir votre messagerie pour envoyer à contact@gsaalgeria.dz" 
+                          : "Launch email client to send to contact@gsaalgeria.dz"
+                        }
+                      </span>
+                    </a>
+                  </div>
+
+                  <div className="pt-2 flex flex-col sm:flex-row gap-3 justify-center max-w-md mx-auto">
                     <button
                       onClick={() => {
-                        // Demo download
-                        alert(lang === "FR" ? `Copie du ticket ${submissionId} générée dans le presse-papiers.` : `Registry invoice ${submissionId} generated to clipboard.`);
-                        navigator.clipboard.writeText(`Ticket GSA ID: ${submissionId}\nNom: ${fullName}\nEmail: ${email}`);
+                        navigator.clipboard.writeText(`Ticket GSA ID: ${submissionId}\nNom: ${fullName}\nEmail: ${email}\nMessage: ${message}`);
+                        setCopiedTicket(true);
+                        setTimeout(() => setCopiedTicket(false), 3000);
                       }}
-                      className="bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-350 px-5 py-3 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
+                      className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 px-5 py-3 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 focus:outline-none"
                     >
                       <Download className="w-4 h-4 text-slate-500" />
-                      <span>{lang === "FR" ? "Télécharger le ticket" : "Copy Ticket ID"}</span>
+                      <span>
+                        {copiedTicket 
+                          ? (lang === "FR" ? "Copié avec succès !" : "Copied successfully!") 
+                          : (lang === "FR" ? "Copier les détails" : "Copy Details")
+                        }
+                      </span>
                     </button>
                     <button
                       onClick={handleResetForm}
-                      className="bg-gsa-navy hover:bg-gsa-navy-light text-white px-5 py-3 rounded-xl text-xs font-bold transition-colors"
+                      className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-800 px-5 py-3 rounded-xl text-xs font-bold transition-colors"
                     >
-                      {lang === "FR" ? "Envoyer un autre message" : "New consultations ticket"}
+                      {lang === "FR" ? "Nouveau message" : "New form message"}
                     </button>
                   </div>
                 </div>
@@ -1323,10 +1454,20 @@ export default function App() {
               <h4 className="text-white text-xs font-bold uppercase tracking-[0.15em] border-b border-slate-800 pb-2">Eurl GSA ALGERIA</h4>
               <div className="space-y-3 font-mono text-[11px] text-slate-350">
                 <p className="flex justify-between"><span className="text-slate-500 uppercase">Est:</span> <span className="text-slate-200">2026</span></p>
-                <p className="flex justify-between"><span className="text-slate-500 uppercase">Email:</span> <span className="text-slate-200">Eurlgsa@gmail.com</span></p>
+                <p className="flex justify-between">
+                  <span className="text-slate-500 uppercase">Email:</span> 
+                  <span className="text-slate-200">
+                    <a href="mailto:contact@gsaalgeria.dz" className="hover:text-gsa-gold transition-colors">contact@gsaalgeria.dz</a>
+                  </span>
+                </p>
                 <p className="flex justify-between"><span className="text-slate-500 uppercase">Tél 1:</span> <span className="text-slate-200">+213 (0) 553 014 306</span></p>
                 <p className="flex justify-between"><span className="text-slate-500 uppercase">Tél 2:</span> <span className="text-slate-200">+213 (0) 698 087 278</span></p>
-                <p className="flex justify-between"><span className="text-slate-500 uppercase">Web Portal:</span> <span className="text-gsa-gold">www.gsa-algeria.dz</span></p>
+                <p className="flex justify-between">
+                  <span className="text-slate-500 uppercase">Web Portal:</span> 
+                  <span className="text-gsa-gold">
+                    <a href="https://www.gsaalgeria.dz" target="_blank" rel="noopener noreferrer" className="hover:underline">www.gsaalgeria.dz</a>
+                  </span>
+                </p>
               </div>
               <div className="bg-slate-950 p-3 rounded-lg border border-slate-850 text-[10px] leading-relaxed text-slate-400 font-light">
                 {lang === "FR" 
