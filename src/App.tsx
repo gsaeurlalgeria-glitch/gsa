@@ -33,7 +33,6 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { translations, TranslationSet, SectorItem, ServiceItem } from "./data";
-import logoGsa from "./assets/images/logo-gsa.png";
 
 export default function App() {
   const [lang, setLang] = useState<"FR" | "EN">("FR");
@@ -158,7 +157,33 @@ export default function App() {
       setSubmitStep(lang === "FR" ? "Transmission SMTP sécurisée vers contact@gsaalgeria.dz..." : "Routing secure SMTP relay to contact@gsaalgeria.dz...");
 
       const response = await apiPromise;
-      const result = await response.json();
+      let result: any = {};
+      const contentType = response.headers.get("content-type") || "";
+      
+      if (contentType.includes("application/json")) {
+        try {
+          result = await response.json();
+        } catch (jsonErr) {
+          console.error("[JSON_PARSE_CRASH]", jsonErr);
+          throw new Error(lang === "FR"
+            ? "Le serveur a renvoyé une réponse JSON tronquée ou invalide."
+            : "The server sent a truncated or invalid JSON response."
+          );
+        }
+      } else {
+        const textResponse = await response.text();
+        console.error("[HTML_RESPONSE_DETECTED]", textResponse.substring(0, 300));
+        
+        // Custom elegant explanation for serverless proxy routing misconfiguration or Vercel static asset rewrite
+        if (textResponse.trim().startsWith("<!DOCTYPE html") || textResponse.trim().startsWith("<html")) {
+          throw new Error(lang === "FR"
+            ? "Le serveur a retourné une page HTML (444/404) au lieu de JSON. Cela signifie que l'API n'a pas pu être démarrée ou redirige vers l'index.html statique."
+            : "The server returned an HTML page (444/404) instead of JSON. This indicates that the API endpoint is inactive or falling back to index.html."
+          );
+        } else {
+          throw new Error(textResponse.substring(0, 150) || (lang === "FR" ? "Le serveur a renvoyé une réponse brute inattendue." : "The server sent an unexpected raw response."));
+        }
+      }
 
       if (response.ok && result.success) {
         // Let user see the completion briefly
@@ -234,8 +259,8 @@ export default function App() {
             <div className="flex-shrink-0 flex items-center">
               <a href="#top-wire" className="flex items-center gap-3 group focus:outline-none focus:ring-2 focus:ring-gsa-gold/50 rounded p-1">
                 <img
-                  src={logoGsa}
-                  alt="EURL GSA | Global Solutions Algeria Logo"
+                  src="/logo-gsa.png"
+                  alt="EURL GSA Logo"
                   className="h-14 w-auto object-contain transition-transform duration-300 group-hover:scale-[1.02]"
                   referrerPolicy="no-referrer"
                 />
@@ -1413,8 +1438,8 @@ export default function App() {
               <div className="flex items-center gap-3">
                 <div className="bg-white/95 p-2 rounded-xl inline-block shadow-lg border border-slate-700/30">
                   <img
-                    src={logoGsa}
-                    alt="EURL GSA | Global Solutions Algeria Logo"
+                    src="/logo-gsa.png"
+                    alt="EURL GSA Logo"
                     className="h-10 w-auto object-contain"
                     referrerPolicy="no-referrer"
                   />
