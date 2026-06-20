@@ -38,7 +38,7 @@ export default async function handler(req: Request, res: Response) {
     const port = Number(process.env.SMTP_PORT) || 587;
     const user = process.env.SMTP_USER;
     const pass = process.env.SMTP_PASS;
-    const secure = process.env.SMTP_SECURE === "true";
+    const secure = process.env.SMTP_SECURE === "true" || (port === 465 && process.env.SMTP_SECURE !== "false");
 
     const mailOptions = {
       from: user || `"GSA Website Portal" <contact@gsaalgeria.dz>`,
