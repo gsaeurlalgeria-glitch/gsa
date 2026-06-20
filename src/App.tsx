@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { translations, TranslationSet, SectorItem, ServiceItem } from "./data";
+import logoGsa from "./logo-gsa.png";
 
 export default function App() {
   const [lang, setLang] = useState<"FR" | "EN">("FR");
@@ -259,7 +260,7 @@ export default function App() {
             <div className="flex-shrink-0 flex items-center">
               <a href="#top-wire" className="flex items-center gap-3 group focus:outline-none focus:ring-2 focus:ring-gsa-gold/50 rounded p-1">
                 <img
-                  src="/logo-gsa.png"
+                  src={logoGsa}
                   alt="EURL GSA Logo"
                   className="h-14 w-auto object-contain transition-transform duration-300 group-hover:scale-[1.02]"
                   referrerPolicy="no-referrer"
@@ -1438,7 +1439,7 @@ export default function App() {
               <div className="flex items-center gap-3">
                 <div className="bg-white/95 p-2 rounded-xl inline-block shadow-lg border border-slate-700/30">
                   <img
-                    src="/logo-gsa.png"
+                    src={logoGsa}
                     alt="EURL GSA Logo"
                     className="h-10 w-auto object-contain"
                     referrerPolicy="no-referrer"
